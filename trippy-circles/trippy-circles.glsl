@@ -1,5 +1,9 @@
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-  vec2 uv = (fragCoord.xy - .5*iResolution.xy) / iResolution.y;
+precision mediump float;
+uniform vec2 u_resolution;
+uniform float u_time;
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - .5*u_resolution.xy) / u_resolution.y;
   uv *= 15.;
 
   float a = .785; // 45deg in radian
@@ -7,7 +11,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   float s = sin(a);
   uv *= mat2(c, -s, s, c);
 
-  float t = iTime * 5.;
+  float t = u_time * 5.;
   vec2 lv = fract(uv) - .5;
 
   bool isInverse = false;
@@ -26,5 +30,5 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   float col = 0.;
   if(isInverse) col = 1. - col;
 
-  fragColor = vec4(vec3(col), 1.0);
+  gl_FragColor = vec4(vec3(col), 1.0);
 }
