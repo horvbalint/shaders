@@ -1,5 +1,6 @@
 precision mediump float;
 uniform vec2 u_resolution;
+uniform vec2 u_mouse;
 uniform float u_time;
 
 float hash(vec2 value) {
@@ -46,6 +47,7 @@ void main() {
   float zoom = 4.;
   uv *= (sin(u_time/3.) / 2. + 1.5) * zoom;
   uv += u_time/3.;
+  uv += u_mouse / 1000.;
 
   float t1 = truchet(uv, .18, true);
   float t2 = truchet(uv + .5, .18, false);
