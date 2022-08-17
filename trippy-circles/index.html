@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <title>Driving home</title>
+    <title>Trippy circles</title>
   </head>
 
   <script type="text/javascript" src="https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js"></script>
@@ -17,36 +14,18 @@
       margin: 0;
       box-sizing: border-box;
       background: black;
-      font-family: 'Roboto', sans-serif;
-      text-transform: uppercase;
     }
-    body, .overlay {
+    body {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
       right: 0;
     }
-    .overlay {
-      background: black;
-      opacity: 0.8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: opacity 1s;
-    }
-    .overlay p {
-      color: white;
-      font-size: 30px;
-    }
   </style>
 
   <body>
-    <canvas class="glslCanvas" data-fragment-url="driving-home.glsl"></canvas>
-    <div class="overlay">
-      <p>Start your journey...</p>
-    </div>
+    <canvas class="glslCanvas" data-fragment-url="trippy-circles.glsl"></canvas>
 
     <script>
       let canvas = document.querySelector('.glslCanvas')
@@ -58,25 +37,15 @@
         canvas.height = document.body.clientHeight
       })
 
-      let isAudioPlaying = false
       let lastClickAt = 0
       
-      let overlay = document.querySelector('.overlay')
-      overlay.addEventListener('click', () => {
-        if(!isAudioPlaying) {
-          isAudioPlaying = true
-
-          let audio = new Audio('driving-home.mp3')
-          audio.loop = true
-          audio.addEventListener('canplay', () => audio.play())
-        }
-        
+      canvas.addEventListener('click', () => {
         let now = performance.now()
+
         if(now-lastClickAt < 240)
           toggleFullScreen()
+
         lastClickAt = now
-        
-        overlay.style.opacity = 0
       })
 
       function toggleFullScreen() {
