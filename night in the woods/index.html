@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <title>Night in the woods</title>
+</head>
+
+<script type="text/javascript"
+  src="https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js"></script>
+
+<style>
+  * {
+    margin: 0;
+    box-sizing: border-box;
+    background: black;
+  }
+
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+</style>
+
+<body>
+  <canvas class="glslCanvas" data-fragment-url="night in the woods.frag"></canvas>
+
+  <script>
+    let canvas = document.querySelector('.glslCanvas')
+    canvas.width = document.body.clientWidth
+    canvas.height = document.body.clientHeight
+
+    window.addEventListener('resize', () => {
+      canvas.width = document.body.clientWidth
+      canvas.height = document.body.clientHeight
+    })
+
+    let isAudioPlaying = false
+    let lastClickAt = 0
+
+    canvas.addEventListener('click', event => {
+      let now = performance.now()
+
+      if (now - lastClickAt < 300)
+        toggleFullScreen()
+
+      lastClickAt = now
+    })
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement)
+        return document.documentElement.requestFullscreen()
+
+      if (document.exitFullscreen)
+        return document.exitFullscreen()
+    }
+  </script>
+</body>
+
+</html>
