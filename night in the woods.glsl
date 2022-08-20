@@ -1,15 +1,14 @@
-// remap from one range to an other (liniar-interpol)
-float remap(vec2 from, vec2 to, float value) {
-  float t = (value-from.x) / (from.y-from.x);
-  return mix(to.x, to.y, t);
-}
-
-vec3 rgb(int r, int g, int b) {
-  return vec3(float(r) / 255., float(g) / 255., float(b) / 255.);
-}
+const float PI = 3.1415;
+const vec2 MOON_POS = vec2(-.1, .08);
+const vec3 MOON_COL = vec3(213./255., 225./255., 242./255.);
+const float NUM_OF_TREES = 8.;
 
 float hash(vec2 value) {
   return fract(sin(dot(value, vec2(19.9898, 78.233))) * 34258.5453);
+}
+
+vec2 rotate(vec2 pos, float angle) {
+  return mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * pos;
 }
 
 float TaperBox(vec2 uv, float bottom_y, float top_y, float bottom_width, float top_width, float blur) {
@@ -22,7 +21,9 @@ float TaperBox(vec2 uv, float bottom_y, float top_y, float bottom_width, float t
   return alpha;
 }
 
-vec4 Tree(vec2 uv, vec3 color, float blur) {
+vec4 Tree(vec2 uv, vec3 color, float rotation, float blur) {
+  uv = rotate(uv, rotation/10.-.05);
+
   float main = TaperBox(uv, -.3, .2, .05, .05, blur);
   main += TaperBox(uv, .2, .45, .3, .15, blur);
   main += TaperBox(uv, .45, .7, .25, .08, blur);
@@ -40,7 +41,6 @@ vec4 Tree(vec2 uv, vec3 color, float blur) {
 }
 
 float get_height(vec2 pos) {
-  // return sin(pos.x) / 2. + sin(pos.x * 2.) / 5.;
   return sin(pos.x)/3. + sin(pos.x * 3.)/10.;
 }
 
@@ -48,13 +48,17 @@ vec4 Layer(vec2 uv, vec3 color, float blur) {
   vec2 id = floor(uv);
   vec4 col = vec4(0.);
 
-  float random = hash(vec2(id.x)) / 2. + 0.5;
-  float scale = mix(.7, 1.6, random);
-  float offset = mix(-.2, .2, random);
+  float random = hash(vec2(id.x));
+  vec2 scale = vec2(
+    mix(1., 1.3, fract(random*10.)),
+    mix(1., 1.1, fract(random*43.))
+  );
+  scale.x *= step(.5, random)* 2. - 1.;
+  float offset = mix(-.2, .2, fract(random*27.));
 
   float tree_height = get_height(id + .5 - offset);
   vec2 tree_pos = vec2(fract(uv.x) - .5 + offset, uv.y - tree_height);
-  vec4 tree = Tree(tree_pos * scale, color, blur);
+  vec4 tree = Tree(tree_pos * scale, color, fract(random*23.), blur);
 
   float alpha = clamp(col.a + tree.a, 0., 1.);
   col = vec4(mix(col.rgb, tree.rgb, tree.a), alpha);
@@ -67,15 +71,9 @@ vec4 Layer(vec2 uv, vec3 color, float blur) {
   return col;
 }
 
-const vec2 MOON_POS = vec2(-.1, .08);
-const vec3 MOON_COL = vec3(213./255., 225./255., 242./255.);
-
 float Moon(vec2 uv) {
   float dist = length(uv - MOON_POS);
   float alpha = smoothstep(.0015, -.0015, dist-.06);
-
-  // dist = length(uv - MOON_POS-.02);
-  // alpha -= smoothstep(.001, -.001, dist-.05) * .95;
 
   return clamp(alpha, 0., 1.);
 }
@@ -89,18 +87,16 @@ float MoonHalo(vec2 uv) {
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec2 uv = fragCoord.xy / iResolution.xy;
   uv -= .5; // centers the coordinate system
-  uv.x *= iResolution.x/iResolution.y; // compensates for the stretch when the rat
+  uv.x *= iResolution.x/iResolution.y; // compensates for the stretch when the ratio is not 1:1
+  
   uv.y += .2;
   uv /= 2.;
-
+  uv += (iMouse.xy / iResolution.xy -.5) / 10.;
 
   vec3 color = vec3(0.);
 
-  // vec2 star_uv = fract(uv * 10.) - .5;
-  // float dist = length(star_uv);
   float rand = hash(uv);
   float star = (1.-step(0.006, rand)) * rand * 100.;
-  // float star = 1.-smoothstep(-.01, .01, dist - .1);
   color = vec3(star);
 
   float halo = MoonHalo(uv);
@@ -109,13 +105,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   float moon = Moon(uv);
   color = mix(color, MOON_COL * moon, moon);
 
-  // uv += (iMouse.xy / iResolution.xy -.5) / 10.;
-
-  float num_of_trees = 8.;
-  for(float i=0.; i<1.; i+=1./num_of_trees) {
+  for(float i=0.; i<1.; i+=1./NUM_OF_TREES) {
     vec2 pos = vec2(uv.x + i * 46.7 + iTime / 30. * (i + .3), uv.y);
 
-    float rev_i = (1.-1./num_of_trees - i);
+    float rev_i = (1.-1./NUM_OF_TREES - i);
     float scale = mix(5., 20., rev_i);
     float shade = mix(.1, 1., rev_i);
     float blur = mix(.008, .03, rev_i);
@@ -124,7 +117,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     color = mix(color, layer.rgb, layer.a);
   }
 
-  vec4 layer = Layer(vec2(uv.x + iTime/10., uv.y+.7), vec3(0.), .015);
+  vec4 layer = Layer(vec2(uv.x + 0. + iTime/10., uv.y+.9), vec3(0.), .015);
   color = mix(color, layer.rgb, layer.a);
 
   fragColor = vec4(color, 1.);
