@@ -1,6 +1,6 @@
 const float PI = 3.1415;
+const vec3 SHADE_COL = vec3(213./255., 225./255., 242./255.);
 const vec2 MOON_POS = vec2(-.1, .08);
-const vec3 MOON_COL = vec3(213./255., 225./255., 242./255.);
 const float NUM_OF_TREES = 8.;
 
 float hash(vec2 value) {
@@ -81,7 +81,25 @@ float Moon(vec2 uv) {
 float MoonHalo(vec2 uv) {
   float dist = length(uv - MOON_POS);
 
-  return mix(.9, 0., dist*1.5);
+  return clamp(mix(.9, 0., dist*2.), 0., .9);
+}
+
+float ShootingStar(vec2 uv) {
+  uv *= 1200.;
+
+  float time = fract(iTime/10.);
+  float fall_at = 0.95;
+  time = step(fall_at, time) * (time-fall_at) * 20.;
+  float travel = time * 240.;
+  uv.x -= travel;
+  uv.y += travel/2.;
+  
+  float dist = length(uv);
+  float star = 1./dist;
+
+  float strength = sqrt(sin(mix(0., 2.*PI, time) - PI/2.)*.5+.5);
+
+  return clamp(strength * star, 0., 1.);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -91,7 +109,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   
   uv.y += .2;
   uv /= 2.;
-  uv += (iMouse.xy / iResolution.xy -.5) / 10.;
 
   vec3 color = vec3(0.);
 
@@ -100,10 +117,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   color = vec3(star);
 
   float halo = MoonHalo(uv);
-  color = mix(color, MOON_COL * halo, halo);
+  color = mix(color, SHADE_COL * halo, halo);
 
   float moon = Moon(uv);
-  color = mix(color, MOON_COL * moon, moon);
+  color = mix(color, SHADE_COL * moon, moon);
+
+  float shooting_star1 = ShootingStar(uv - vec2(.1, .3));
+  color = mix(color, vec3(1.), shooting_star1);
 
   for(float i=0.; i<1.; i+=1./NUM_OF_TREES) {
     vec2 pos = vec2(uv.x + i * 46.7 + iTime / 30. * (i + .3), uv.y);
@@ -113,7 +133,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float shade = mix(.1, 1., rev_i);
     float blur = mix(.008, .03, rev_i);
 
-    vec4 layer = Layer(pos * scale, MOON_COL * shade, blur);
+    vec4 layer = Layer(pos * scale, SHADE_COL * shade, blur);
     color = mix(color, layer.rgb, layer.a);
   }
 
