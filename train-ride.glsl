@@ -145,7 +145,7 @@ vec4 Plane(vec2 uv) {
 }
 
 vec4 Bushes(vec2 uv) {
-  uv.x -= iTime * 2.;
+  uv.x -= iTime * 3.;
   uv.y += .4;
 
   float height = (sin(uv.x * 20.) + 1.) / 25.;
