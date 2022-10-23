@@ -130,7 +130,7 @@ vec4 Field(vec2 uv, float blur) {
 vec4 Plane(vec2 uv) {
   float width = u_resolution.x/u_resolution.y;
 
-  float speed = 50.;
+  float speed = 70.;
   float rotation = PI / 2.2;
   float x_pos = fract(u_time/speed) * width * 3.;
   vec2 final_uv = rotate(uv, rotation) + vec2(-.4, .5*width - x_pos);
@@ -140,7 +140,7 @@ vec4 Plane(vec2 uv) {
 
   float progress = clamp(-final_uv.y / width / 2., 0., 1.);
   float trail_blur = progress / 50. + .005;
-  float y_shift = (sin(uv.x * 30.) / 500.) * progress;
+  float y_shift = (sin(uv.x * 30.) / 300.) * progress;
   float trail = TaperBox(final_uv + vec2(y_shift, 0.), -2.*width, 0., .015, 0.0004, trail_blur);
   float alpha = trail * (1. - progress);
   color.rgb = mix(color.rgb, vec3(trail * rgb(215, 134, 141)), alpha);
@@ -149,27 +149,43 @@ vec4 Plane(vec2 uv) {
   return vec4(color);
 }
 
+vec4 Bushes(vec2 uv) {
+  uv.x -= u_time * 2.;
+  uv.y += .4;
+
+  float height = (sin(uv.x * 20.) + 1.) / 25.;
+  height += sin(uv.x * 13.) / 30.;
+  height += sin(uv.x * 63.) / 200.;
+
+  float silluete = smoothstep(.2, -.2, uv.y - height);
+
+  return vec4(silluete * rgb(36, 29, 27), silluete);
+}
+
 void main() {
-    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    uv -= .5; // centers the coordinate system
-    uv.x *= u_resolution.x/u_resolution.y; // compensates for the stretch when the ratio of the screen is not 1
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  uv -= .5; // centers the coordinate system
+  uv.x *= u_resolution.x/u_resolution.y; // compensates for the stretch when the ratio of the screen is not 1
 
-    vec3 color = Sky(uv, rgb(245, 129, 116), rgb(148, 145, 197));
+  vec3 color = Sky(uv, rgb(245, 129, 116), rgb(148, 145, 197));
 
-    vec4 mountains = Mountains(uv, 0.1);
-    color = mix(color, mountains.rgb, mountains.a);
+  vec4 mountains = Mountains(uv, 0.1);
+  color = mix(color, mountains.rgb, mountains.a);
 
-    vec4 hills = Hills(uv, 0.1);
-    color = mix(color, hills.rgb, hills.a);
+  vec4 hills = Hills(uv, 0.1);
+  color = mix(color, hills.rgb, hills.a);
 
-    vec4 field = Field(uv, 0.1);
-    color = mix(color, field.rgb, field.a);
+  vec4 field = Field(uv, 0.1);
+  color = mix(color, field.rgb, field.a);
 
-    vec4 plane = Plane(uv);
-    color += plane.rgb;
+  vec4 plane = Plane(uv);
+  color += plane.rgb;
 
-    vec4 window = Window(uv, 0.005);
-    color = mix(color, window.rgb, window.a);
+  vec4 bushes = Bushes(uv);
+  color = mix(color, bushes.rgb, bushes.a);
 
-    gl_FragColor = vec4(color, 1.0);
+  vec4 window = Window(uv, 0.005);
+  color = mix(color, window.rgb, window.a);
+
+  gl_FragColor = vec4(color, 1.0);
 }

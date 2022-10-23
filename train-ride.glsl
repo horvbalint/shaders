@@ -125,7 +125,7 @@ vec4 Field(vec2 uv, float blur) {
 vec4 Plane(vec2 uv) {
   float width = iResolution.x/iResolution.y;
 
-  float speed = 50.;
+  float speed = 70.;
   float rotation = PI / 2.2;
   float x_pos = fract(iTime/speed) * width * 3.;
   vec2 final_uv = rotate(uv, rotation) + vec2(-.4, .5*width - x_pos);
@@ -135,13 +135,26 @@ vec4 Plane(vec2 uv) {
 
   float progress = clamp(-final_uv.y / width / 2., 0., 1.);
   float trail_blur = progress / 50. + .005;
-  float y_shift = (sin(uv.x * 30.) / 500.) * progress;
+  float y_shift = (sin(uv.x * 30.) / 300.) * progress;
   float trail = TaperBox(final_uv + vec2(y_shift, 0.), -2.*width, 0., .015, 0.0004, trail_blur);
   float alpha = trail * (1. - progress);
   color.rgb = mix(color.rgb, vec3(trail * rgb(215, 134, 141)), alpha);
   color.a = max(color.a, alpha);
 
   return vec4(color);
+}
+
+vec4 Bushes(vec2 uv) {
+  uv.x -= iTime * 2.;
+  uv.y += .4;
+
+  float height = (sin(uv.x * 20.) + 1.) / 25.;
+  height += sin(uv.x * 13.) / 30.;
+  height += sin(uv.x * 63.) / 200.;
+
+  float silluete = smoothstep(.2, -.2, uv.y - height);
+
+  return vec4(silluete * rgb(36, 29, 27), silluete);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
@@ -162,6 +175,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 
     vec4 plane = Plane(uv);
     color += plane.rgb;
+
+    vec4 bushes = Bushes(uv);
+    color = mix(color, bushes.rgb, bushes.a);
 
     vec4 window = Window(uv, 0.005);
     color = mix(color, window.rgb, window.a);
