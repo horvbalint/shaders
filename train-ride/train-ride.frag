@@ -132,16 +132,16 @@ vec4 Plane(vec2 uv) {
 
   float speed = 70.;
   float rotation = PI / 2.2;
-  float x_pos = fract(u_time/speed) * width * 3.;
+  float x_pos = fract(u_time/speed) * width * 2.;
   vec2 final_uv = rotate(uv, rotation) + vec2(-.4, .5*width - x_pos);
 
   float plane = TaperBox(final_uv, -.005, .005, .002, .0, .002);
   vec4 color = vec4(plane * rgb(153, 105, 106), plane);
 
-  float progress = clamp(-final_uv.y / width / 2., 0., 1.);
+  float progress = clamp(-final_uv.y / width, 0., 1.);
   float trail_blur = progress / 50. + .005;
   float y_shift = (sin(uv.x * 30.) / 300.) * progress;
-  float trail = TaperBox(final_uv + vec2(y_shift, 0.), -2.*width, 0., .015, 0.0004, trail_blur);
+  float trail = TaperBox(final_uv + vec2(y_shift, 0.), -width, 0., .015, 0.0004, trail_blur);
   float alpha = trail * (1. - progress);
   color.rgb = mix(color.rgb, vec3(trail * rgb(215, 134, 141)), alpha);
   color.a = max(color.a, alpha);
@@ -150,14 +150,14 @@ vec4 Plane(vec2 uv) {
 }
 
 vec4 Bushes(vec2 uv) {
-  uv.x -= u_time * 2.;
+  uv.x -= u_time * 2.5;
   uv.y += .4;
 
-  float height = (sin(uv.x * 20.) + 1.) / 25.;
-  height += sin(uv.x * 13.) / 30.;
+  float height = (sin(uv.x * 5.) + 1.) / 20.;
+  height += sin(uv.x * 20.) / 25.;
   height += sin(uv.x * 63.) / 200.;
 
-  float silluete = smoothstep(.2, -.2, uv.y - height);
+  float silluete = smoothstep(.15, -.15, uv.y - height);
 
   return vec4(silluete * rgb(36, 29, 27), silluete);
 }

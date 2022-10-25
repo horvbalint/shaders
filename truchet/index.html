@@ -55,11 +55,18 @@
       lastClickAt = now
     })
 
+    window.addEventListener('fullscreenchange', () => {
+      if(document.fullscreenElement)
+        document.body.style.cursor = 'none'
+      else
+        document.body.style.cursor = 'default'
+    })
+
     function toggleFullScreen() {
-      if (!document.fullscreenElement)
+      if(!document.fullscreenElement)
         return document.documentElement.requestFullscreen()
 
-      if (document.exitFullscreen)
+      if(document.exitFullscreen)
         return document.exitFullscreen()
     }
   </script>
