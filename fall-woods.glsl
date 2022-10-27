@@ -16,18 +16,21 @@ vec4 Forest(vec2 uv, float zoom, float blur, vec3[4] palette, vec2 shift) {
   uv *= zoom;
   uv += shift;
 
-  vec4 forest_color = vec4(rgb(74, 38, 8), 1);
+  // vec4 forest_color = vec4(rgb(74, 38, 8), 1);
+  float ground_mix = clamp(abs(uv.x)/((iResolution.x/iResolution.y)*zoom/2./3.), 0., 1.);
+  vec4 forest_color = vec4(mix(rgb(0, 71, 6), rgb(41, 34, 1), ground_mix), 1.);
 
-  vec2 road_pos = uv - vec2(.5, 0.);
-  float road_mask = step(.6, abs(road_pos.x));
-  forest_color.rgb = mix(forest_color.rgb, rgb(48, 56, 67), 1.-road_mask); // TODO: optimize
+  vec2 road_pos = uv - vec2(.5, 0) + vec2(sin(uv.y / 2.) * 1.1, 0.);
+  float road_mask = 1.-step(.6, abs(road_pos.x));
+  forest_color.rgb *= 1.-road_mask;
+  forest_color.rgb += road_mask * rgb(48, 56, 67);
 
-  float pavement_mask = step(.53, abs(road_pos.x)) * (1.-step(.6, abs(road_pos.x)));
-  forest_color.rgb = mix(forest_color.rgb, rgb(207, 191, 178), pavement_mask); // TODO: optimize
+  float pavement_mask = (1.-smoothstep(blur, -blur, abs(road_pos.x) - .53)) * smoothstep(blur, -blur, abs(road_pos.x) - .6);
+  forest_color.rgb = mix(forest_color.rgb, rgb(207, 191, 178), pavement_mask);
 
-  float day_length = 1.;
-  float night_time = sin(iTime / day_length - 1.5) / 2. + .5;
-  float shadow_time = sin(iTime / day_length) / 2.;
+  float day_length = 3.;
+  float night_time = sin(12. / day_length - PI / 2.) / 2. + .5;
+  float shadow_time = sin(12. / day_length) / 2.;
 
   vec2 shadow_shift_amount = vec2(shadow_time/2.);
 
@@ -58,21 +61,30 @@ vec4 Forest(vec2 uv, float zoom, float blur, vec3[4] palette, vec2 shift) {
       float shadow_dist = length(shadow_uv);
       float shadow_mask = smoothstep(blur, -blur, shadow_dist - size);
 
+      float shadow_dist_2 = length(local_uv)-.05;
+      float shadow_mask_2 = smoothstep(blur, -blur, shadow_dist_2 - size);
+
       // choosing a random color + gradient
+      vec3 base_color = vec3(0.);
       int color_index = int(fract(random * 23.) * 4.);
-      
-      vec3 base_color = vec3(1.);
-      if(color_index == 0) base_color = palette[0];
-      else if(color_index == 1) base_color = palette[1];
-      else if(color_index == 2) base_color = palette[2];
-      else base_color = palette[3];
+      for(int i=color_index; i<4; i+=4) {
+        base_color = palette[i];
+      }
+      // if(color_index == 0) base_color = palette[0];
+      // else if(color_index == 1) base_color = palette[1];
+      // else if(color_index == 2) base_color = palette[2];
+      // else base_color = palette[3];
 
       float color_shift = fract(random * 78.) / 20. + .05;
       vec3 center_color = base_color + color_shift;
       vec3 edge_color = base_color - color_shift;
       vec3 color = mix(center_color, edge_color, length(local_uv + shadow_shift)*2.);
 
-      float road_mask = step(.5, abs(id.x));
+      float road_mask = step(1., abs(id.x + sin(id.y / 2.) * 1.1));
+
+      float shadow_alpha_2 = shadow_mask_2 * road_mask;
+      forest_color.rgb = mix(forest_color.rgb, vec3(0.), shadow_alpha_2/5. * night_time);
+
       float shadow_alpha = shadow_mask * road_mask;
       forest_color.rgb = mix(forest_color.rgb, vec3(0.), shadow_alpha/3. * night_time);
 
