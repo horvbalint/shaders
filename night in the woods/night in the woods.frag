@@ -4,7 +4,7 @@ uniform float u_time;
 
 const float PI = 3.1415;
 const vec3 SHADE_COL = vec3(213./255., 225./255., 242./255.);
-const vec2 MOON_POS = vec2(-.1, .08);
+const vec2 MOON_POS = vec2(-.1, .1);
 const float NUM_OF_TREES = 8.;
 
 float hash(vec2 value) {
@@ -63,13 +63,11 @@ vec4 Layer(vec2 uv, vec3 color, float blur) {
   float tree_height = get_height(id + .5 - offset);
   vec2 tree_pos = vec2(fract(uv.x) - .5 + offset, uv.y - tree_height);
   vec4 tree = Tree(tree_pos * scale, color, fract(random*23.), blur);
-
-  float alpha = clamp(col.a + tree.a, 0., 1.);
-  col = vec4(mix(col.rgb, tree.rgb, tree.a), alpha);
+  col = vec4(mix(col.rgb, tree.rgb, tree.a), tree.a);
 
   float ground_height = get_height(uv);
   float ground = smoothstep(blur, -blur, uv.y - ground_height);
-  alpha = clamp(col.a + ground, 0., 1.);
+  float alpha = clamp(col.a + ground, 0., 1.);
   col = vec4(vec3(mix(col.rgb, color, ground)), alpha);
 
   return col;
@@ -117,7 +115,7 @@ void main() {
   vec3 color = vec3(0.);
 
   float rand = hash(uv);
-  float star = (1.-step(0.006, rand)) * rand * 100.;
+  float star = (1.-step(0.0045, rand)) * rand * 125.;
   color = vec3(star);
 
   float halo = MoonHalo(uv);
